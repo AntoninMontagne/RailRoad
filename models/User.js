@@ -6,38 +6,34 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     unique: true,
-    required: true,
-    validate: {
-      validator: (value) => Joi.string().email().validate(value).error === null,
-      message: 'Invalid email format',
-    },
+    required: true
   },
   pseudo: {
     type: String,
     unique: true,
-    required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Pseudo is required',
-    },
-  },
-  password: {
-    type: String,
-    required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Password is required',
-    },
+    required: true
   },
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user',
-  },
+    default: 'user'
+  }
 });
 
+// Ajout du plugin passport-local-mongoose pour gérer le champ "password"
 userSchema.plugin(passportLocalMongoose, { usernameField: 'email' });
 
 const User = mongoose.model('User', userSchema);
+
+// Fonction de validation utilisant Joi
+User.validateUser = async function(userData) {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    pseudo: Joi.string().required(),
+    role: Joi.string().valid('user', 'admin').default('user')
+  });
+
+  return await schema.validateAsync(userData);
+};
 
 module.exports = User;
