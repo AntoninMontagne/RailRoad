@@ -1,23 +1,18 @@
 // controllers/stationController.js
 const Station = require('../models/Station');
+const Train = require('../models/Train');
 
-const getStations = async (req, res) => {
+const listStations = async (req, res) => {
   try {
-    const stations = await Station.find();
-    res.json(stations);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+    const { sortBy } = req.query;
+    const query = Station.find();
 
-const getStationById = async (req, res) => {
-  try {
-    const station = await Station.findById(req.params.id);
-    if (!station) {
-      return res.status(404).json({ error: 'Station not found' });
+    if (sortBy) {
+      query.sort(sortBy);
     }
-    res.json(station);
+
+    const stations = await query.exec();
+    res.json(stations);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -26,13 +21,18 @@ const getStationById = async (req, res) => {
 
 const createStation = async (req, res) => {
   try {
-    const { name, open_hour, close_hour, image } = req.body;
+    // Vérification du rôle de l'utilisateur
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-    // Create a new station
-    const station = new Station({ name, open_hour, close_hour, image });
-    await station.save();
+    const { name, open_hour, close_hour } = req.body;
+    const newStation = new Station({ name, open_hour, close_hour });
 
-    res.status(201).json({ message: 'Station created successfully', station });
+    // Ajoutez la logique pour gérer l'image ici si nécessaire
+
+    await newStation.save();
+    res.status(201).json(newStation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -41,25 +41,26 @@ const createStation = async (req, res) => {
 
 const updateStation = async (req, res) => {
   try {
-    const stationId = req.params.id;
-    const { name, open_hour, close_hour, image } = req.body;
+    // Vérification du rôle de l'utilisateur
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-    // Check if the station exists
-    const existingStation = await Station.findById(stationId);
-    if (!existingStation) {
+    const { name, open_hour, close_hour } = req.body;
+
+    const updatedStation = await Station.findByIdAndUpdate(
+      req.params.stationId,
+      { name, open_hour, close_hour },
+      { new: true }
+    );
+
+    if (!updatedStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
 
-    // Update station information
-    existingStation.name = name || existingStation.name;
-    existingStation.open_hour = open_hour || existingStation.open_hour;
-    existingStation.close_hour = close_hour || existingStation.close_hour;
-    existingStation.image = image || existingStation.image;
+    // Ajoutez la logique pour gérer l'image ici si nécessaire
 
-    // Save the changes to the database
-    await existingStation.save();
-
-    res.json({ message: 'Station updated successfully', updatedStation: existingStation });
+    res.json(updatedStation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -68,16 +69,19 @@ const updateStation = async (req, res) => {
 
 const deleteStation = async (req, res) => {
   try {
-    const stationId = req.params.id;
+    // Vérification du rôle de l'utilisateur
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
-    // Check if the station exists
-    const existingStation = await Station.findById(stationId);
-    if (!existingStation) {
+    const deletedStation = await Station.findByIdAndRemove(req.params.stationId);
+
+    if (!deletedStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
 
-    // Delete the station from the database
-    await existingStation.remove();
+    // Supprimer les trains associés à cette station
+    await Train.deleteMany({ $or: [{ start_station: deletedStation._id }, { end_station: deletedStation._id }] });
 
     res.json({ message: 'Station deleted successfully' });
   } catch (error) {
@@ -86,4 +90,9 @@ const deleteStation = async (req, res) => {
   }
 };
 
-module.exports = { getStations, getStationById, createStation, updateStation, deleteStation };
+module.exports = {
+  listStations,
+  createStation,
+  updateStation,
+  deleteStation,
+};

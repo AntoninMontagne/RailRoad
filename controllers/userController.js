@@ -1,106 +1,109 @@
-const User = require('../models/User');
-const bcrypt = require('bcrypt');
+// controllers/userController.js
 const jwt = require('jsonwebtoken');
-const config = require('../config');
+const { secretKey } = require('../config.js');
+const User = require('../models/User');
 
-const register = async (req, res) => {
+const createUser = async (req, res) => {
   try {
-    const { email, pseudo, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { email, pseudo, password, role } = req.body;
+    const newUser = new User({ email, pseudo, role });
+    await User.register(newUser, password);
 
-    const user = new User({ email, pseudo, password: hashedPassword });
-    await user.save();
+    // Génération du token JWT
+    const token = jwt.sign({ id: newUser._id, email: newUser.email, role: newUser.role }, secretKey, { expiresIn: '1h' });
 
-    res.status(201).json({ message: 'User registered successfully' });
+    res.status(201).json({ token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+const getUserInfo = (req, res) => {
+  // Un utilisateur normal ne peut voir que ses propres informations
+  if (req.user.role === 'user' && req.params.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  // Un employé ou un admin peut voir les informations de n'importe quel utilisateur
+  User.findById(req.params.userId, (err, user) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const userInfo = {
+      id: user._id,
+      email: user.email,
+      pseudo: user.pseudo,
+      role: user.role,
+    };
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    res.json(userInfo);
+  });
+};
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, config.secretKey);
-    res.json({ token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+const updateUser = (req, res) => {
+  // Un utilisateur normal ne peut mettre à jour que ses propres informations
+  if (req.user.role === 'user' && req.params.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
+
+  const { email, pseudo, password, role } = req.body;
+
+  User.findById(req.params.userId, async (err, user) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Met à jour les informations de l'utilisateur
+    user.email = email;
+    user.pseudo = pseudo;
+    user.role = role;
+
+    // Si un nouveau mot de passe est fourni, le met à jour
+    if (password) {
+      await user.setPassword(password);
+    }
+
+    await user.save();
+
+    res.json({ message: 'User updated successfully' });
+  });
 };
 
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password');
-    res.json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+const deleteUser = (req, res) => {
+  // Un utilisateur normal ne peut supprimer que lui-même
+  if (req.user.role === 'user' && req.params.userId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
+
+  User.findByIdAndRemove(req.params.userId, (err, user) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: 'User deleted successfully' });
+  });
 };
 
-const updateUser = async (req, res) => {
-    try {
-      const userId = req.params.id;
-      const { email, pseudo, password } = req.body;
-  
-      // Vérifier si l'utilisateur existe
-      const existingUser = await User.findById(userId);
-      if (!existingUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      // Mettre à jour les informations de l'utilisateur
-      existingUser.email = email || existingUser.email;
-      existingUser.pseudo = pseudo || existingUser.pseudo;
-  
-      // Si un nouveau mot de passe est fourni, le hasher et le sauvegarder
-      if (password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        existingUser.password = hashedPassword;
-      }
-  
-      // Sauvegarder les modifications dans la base de données
-      await existingUser.save();
-  
-      res.json({ message: 'User updated successfully', updatedUser: existingUser });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+module.exports = {
+  createUser,
+  getUserInfo,
+  updateUser,
+  deleteUser,
 };
-
-const deleteUser = async (req, res) => {
-    try {
-      const userId = req.params.id;
-  
-      // Vérifier si l'utilisateur existe
-      const existingUser = await User.findById(userId);
-      if (!existingUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      // Supprimer l'utilisateur de la base de données
-      await existingUser.remove();
-  
-      res.json({ message: 'User deleted successfully' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  };
-  
-
-module.exports = { register, login, getUserById, updateUser, deleteUser };

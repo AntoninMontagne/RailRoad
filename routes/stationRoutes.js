@@ -1,11 +1,19 @@
+// routes/stationRoutes.js
 const express = require('express');
 const router = express.Router();
 const stationController = require('../controllers/stationController');
+const { authenticateJWT } = require('../middlewares/authenticationMiddleware');
 
-router.post('/register', stationController.register);
-router.post('/login', stationController.login);
-router.get('/:id', stationController.getStationById);
-router.put('/:id', stationController.updateStation);
-router.delete('/:id', stationController.deleteStation);
+// Route pour lister les stations
+router.get('/stations', stationController.listStations);
+
+// Route pour créer une nouvelle station (protégée par JWT)
+router.post('/stations', authenticateJWT, stationController.createStation);
+
+// Route pour mettre à jour une station (protégée par JWT)
+router.put('/stations/:stationId', authenticateJWT, stationController.updateStation);
+
+// Route pour supprimer une station (protégée par JWT)
+router.delete('/stations/:stationId', authenticateJWT, stationController.deleteStation);
 
 module.exports = router;

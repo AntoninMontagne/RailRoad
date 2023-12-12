@@ -1,23 +1,21 @@
+// controllers/trainController.js
 const Train = require('../models/Train');
 
-const getTrains = async (req, res) => {
+const listTrains = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
-    const trains = await Train.find().limit(limit);
-    res.json(trains);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+    const { sortBy, limit } = req.query;
+    const query = Train.find();
 
-const getTrainById = async (req, res) => {
-  try {
-    const train = await Train.findById(req.params.id);
-    if (!train) {
-      return res.status(404).json({ error: 'Train not found' });
+    if (sortBy) {
+      query.sort(sortBy);
     }
-    res.json(train);
+
+    if (limit) {
+      query.limit(parseInt(limit, 10));
+    }
+
+    const trains = await query.exec();
+    res.json(trains);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -27,12 +25,9 @@ const getTrainById = async (req, res) => {
 const createTrain = async (req, res) => {
   try {
     const { name, start_station, end_station, time_of_departure } = req.body;
-
-    // Create a new train
-    const train = new Train({ name, start_station, end_station, time_of_departure });
-    await train.save();
-
-    res.status(201).json({ message: 'Train created successfully', train });
+    const newTrain = new Train({ name, start_station, end_station, time_of_departure });
+    await newTrain.save();
+    res.status(201).json(newTrain);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -41,25 +36,19 @@ const createTrain = async (req, res) => {
 
 const updateTrain = async (req, res) => {
   try {
-    const trainId = req.params.id;
     const { name, start_station, end_station, time_of_departure } = req.body;
 
-    // Check if the train exists
-    const existingTrain = await Train.findById(trainId);
-    if (!existingTrain) {
+    const updatedTrain = await Train.findByIdAndUpdate(
+      req.params.trainId,
+      { name, start_station, end_station, time_of_departure },
+      { new: true }
+    );
+
+    if (!updatedTrain) {
       return res.status(404).json({ error: 'Train not found' });
     }
 
-    // Update train information
-    existingTrain.name = name || existingTrain.name;
-    existingTrain.start_station = start_station || existingTrain.start_station;
-    existingTrain.end_station = end_station || existingTrain.end_station;
-    existingTrain.time_of_departure = time_of_departure || existingTrain.time_of_departure;
-
-    // Save the changes to the database
-    await existingTrain.save();
-
-    res.json({ message: 'Train updated successfully', updatedTrain: existingTrain });
+    res.json(updatedTrain);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -68,16 +57,11 @@ const updateTrain = async (req, res) => {
 
 const deleteTrain = async (req, res) => {
   try {
-    const trainId = req.params.id;
+    const deletedTrain = await Train.findByIdAndRemove(req.params.trainId);
 
-    // Check if the train exists
-    const existingTrain = await Train.findById(trainId);
-    if (!existingTrain) {
+    if (!deletedTrain) {
       return res.status(404).json({ error: 'Train not found' });
     }
-
-    // Delete the train from the database
-    await existingTrain.remove();
 
     res.json({ message: 'Train deleted successfully' });
   } catch (error) {
@@ -86,4 +70,9 @@ const deleteTrain = async (req, res) => {
   }
 };
 
-module.exports = { getTrains, getTrainById, createTrain, updateTrain, deleteTrain };
+module.exports = {
+  listTrains,
+  createTrain,
+  updateTrain,
+  deleteTrain,
+};
