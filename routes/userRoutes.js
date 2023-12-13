@@ -20,7 +20,6 @@ router.delete('/users/:userId', authenticateJWT, userController.deleteUser);
 // Route pour se login
 router.post('/login', passport.authenticate('local'), userController.login);
 
-
 // Route protégée par JWT
 //router.get('/protected', authenticateJWT, userController.protectedRoute);
 

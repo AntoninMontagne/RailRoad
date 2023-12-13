@@ -5,26 +5,14 @@ const stationSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Name is required',
-    },
   },
   open_hour: {
     type: String, // ou un autre type selon le format de vos heures
     required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Open hour is required',
-    },
   },
   close_hour: {
     type: String, // ou un autre type selon le format de vos heures
     required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Close hour is required',
-    },
   },
   image: {
     type: String, // chemin d'accès ou URL de l'image
@@ -32,5 +20,16 @@ const stationSchema = new mongoose.Schema({
 });
 
 const Station = mongoose.model('Station', stationSchema);
+
+// Fonction de validation utilisant Joi
+Station.validateStation = async function(stationData) {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    open_hour: Joi.string().required(),
+    close_hour: Joi.string().required(),
+  });
+
+  return await schema.validateAsync(stationData);
+};
 
 module.exports = Station;
