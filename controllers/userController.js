@@ -4,7 +4,6 @@ const { secretKey } = require('../config.js');
 const User = require('../models/User');
 const passport = require('passport');
 
-
 const createUser = async (req, res) => {
   try {
     const { email, pseudo, password, role } = req.body;

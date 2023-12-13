@@ -1,5 +1,6 @@
 // routes/userRoutes.js
 const express = require('express');
+const passport = require('passport');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { authenticateJWT } = require('../middlewares/authenticationMiddleware');
@@ -17,7 +18,7 @@ router.put('/users/:userId', authenticateJWT, userController.updateUser);
 router.delete('/users/:userId', authenticateJWT, userController.deleteUser);
 
 // Route pour se login
-router.post('/login', userController.login);
+router.post('/login', passport.authenticate('local', { session: false }), userController.login);
 
 // Route protégée par JWT
 //router.get('/protected', authenticateJWT, userController.protectedRoute);
