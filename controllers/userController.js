@@ -103,12 +103,33 @@ const deleteUser = (req, res) => {
     });
 };
 
-const login = (req, res) => {
-  // Génération du token JWT
-  const token = jwt.sign({ id: req.user._id, email: req.user.email, role: req.user.role }, secretKey, { expiresIn: '1h' });
+const login = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    console.log(user);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-  res.status(200).json({ token });
+    user.authenticate(req.body.password, (err, authenticated) => {
+      if (err || !authenticated) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const token = jwt.sign(
+        { id: user._id, email: user.email, role: user.role },
+        secretKey,
+        { expiresIn: '1h' }
+      );
+
+      res.status(200).json({ token });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
+
 
 
 module.exports = {
