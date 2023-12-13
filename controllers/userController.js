@@ -2,6 +2,8 @@
 const jwt = require('jsonwebtoken');
 const { secretKey } = require('../config.js');
 const User = require('../models/User');
+const passport = require('passport');
+
 
 const createUser = async (req, res) => {
   try {
@@ -103,9 +105,27 @@ const deleteUser = (req, res) => {
   });
 };
 
+const login = (req, res, next) => {
+  passport.authenticate('local', { session: false }, (err, user, info) => {
+    if (err || !user) {
+      return res.status(401).json({ error: 'Authentication failed', info });
+    }
+
+    req.login(user, { session: false }, (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
+      return res.json({ token });
+    });
+  })(req, res, next);
+};
+
 module.exports = {
   createUser,
   getUserInfo,
   updateUser,
   deleteUser,
+  login,
 };

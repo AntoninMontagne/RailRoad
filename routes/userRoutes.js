@@ -16,6 +16,9 @@ router.put('/users/:userId', authenticateJWT, userController.updateUser);
 // Route pour supprimer un utilisateur (protégée par JWT)
 router.delete('/users/:userId', authenticateJWT, userController.deleteUser);
 
+// Route pour se login
+router.post('/login', userController.login);
+
 // Route protégée par JWT
 //router.get('/protected', authenticateJWT, userController.protectedRoute);
 
