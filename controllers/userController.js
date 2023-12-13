@@ -91,18 +91,17 @@ const deleteUser = (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
-  User.findByIdAndRemove(req.params.userId, (err, user) => {
-    if (err) {
+  User.findOneAndDelete({ _id: req.params.userId })
+    .then(user => {
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json({ message: 'User deleted successfully' });
+    })
+    .catch(err => {
       console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ message: 'User deleted successfully' });
-  });
+      res.status(500).json({ error: 'Internal Server Error' });
+    });
 };
 
 const login = (req, res, next) => {
