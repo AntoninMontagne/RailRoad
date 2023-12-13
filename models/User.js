@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'employee'],
     default: 'user'
   }
 });
@@ -30,7 +30,7 @@ User.validateUser = async function(userData) {
   const schema = Joi.object({
     email: Joi.string().email().required(),
     pseudo: Joi.string().required(),
-    role: Joi.string().valid('user', 'admin').default('user')
+    role: Joi.string().valid('user', 'admin', 'employee').default('user')
   });
 
   return await schema.validateAsync(userData);

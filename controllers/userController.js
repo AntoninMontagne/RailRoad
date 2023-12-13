@@ -50,7 +50,7 @@ const getUserInfo = async (req, res) => {
 
 const updateUser = async (req, res) => {
   // Un utilisateur normal ne peut mettre à jour que ses propres informations
-  if (req.user.role === 'user' && req.params.userId !== req.user.id) {
+  if ((req.user.role === 'user' || req.user.role === 'employee') && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
@@ -86,7 +86,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = (req, res) => {
   // Un utilisateur normal ne peut supprimer que lui-même
-  if (req.user.role === 'user' && req.params.userId !== req.user.id) {
+  if ((req.user.role === 'user' || req.user.role === 'employee') && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
