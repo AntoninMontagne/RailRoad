@@ -103,22 +103,13 @@ const deleteUser = (req, res) => {
     });
 };
 
-const login = (req, res, next) => {
-  passport.authenticate('local', { session: false }, (err, user, info) => {
-    if (err || !user) {
-      return res.status(401).json({ error: 'Authentication failed', info });
-    }
+const login = (req, res) => {
+  // Génération du token JWT
+  const token = jwt.sign({ id: req.user._id, email: req.user.email, role: req.user.role }, secretKey, { expiresIn: '1h' });
 
-    req.login(user, { session: false }, (err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Internal Server Error' });
-      }
-
-      const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
-      return res.json({ token });
-    });
-  })(req, res, next);
+  res.status(200).json({ token });
 };
+
 
 module.exports = {
   createUser,
