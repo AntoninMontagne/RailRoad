@@ -74,7 +74,7 @@ const deleteStation = async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const deletedStation = await Station.findByIdAndRemove(req.params.stationId);
+    const deletedStation = await Station.findOneAndDelete(req.params.stationId);
 
     if (!deletedStation) {
       return res.status(404).json({ error: 'Station not found' });
