@@ -6,6 +6,8 @@ const passport = require('passport');
 const localStrategy = require('passport-local').Strategy;
 const expressJoiValidation = require('express-joi-validation');
 const expressJoi = expressJoiValidation.createValidator({ passError: true });
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./docs/swagger.json');
 require('dotenv').config();
 
 const User = require('./models/User');
@@ -46,6 +48,9 @@ app.use('/', userRoutes, trainRoutes, ticketRoutes, stationRoutes);
 app.get('/api/protected', authenticateJWT, (req, res) => {
   res.json({ message: 'This is a protected route.' });
 });
+
+// Gestion de la documentation avec Swagger
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {

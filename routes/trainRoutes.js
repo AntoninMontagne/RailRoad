@@ -7,6 +7,9 @@ const { authenticateJWT } = require('../middlewares/authenticationMiddleware');
 // Route pour lister les trains
 router.get('/trains', trainController.listTrains);
 
+// Route pour obtenir des informations sur un train
+router.get('/trains/:trainId', trainController.getTrainInfo);
+
 // Route pour créer un nouveau train
 router.post('/trains', authenticateJWT, trainController.createTrain);
 

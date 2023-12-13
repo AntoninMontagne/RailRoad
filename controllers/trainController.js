@@ -23,8 +23,36 @@ const listTrains = async (req, res) => {
   }
 };
 
+const getTrainInfo = async (req, res) => {
+  try {
+    // Utilisation de async/await avec findById pour obtenir les informations du train
+    const train = await Train.findById(req.params.trainId);
+
+    if (!train) {
+      return res.status(404).json({ error: 'Train not found' });
+    }
+
+    const trainInfo = {
+      id: train._id,
+      name: train.name,
+      start_station: train.start_station,
+      end_station: train.end_station,
+      time_of_departure: train.time_of_departure,
+    };
+
+    res.json(trainInfo);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const createTrain = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { name, start_station, end_station, time_of_departure } = req.body;
 
     // Vérifier si les stations existent par leur nom
@@ -53,6 +81,10 @@ const createTrain = async (req, res) => {
 
 const updateTrain = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { name, start_station, end_station, time_of_departure } = req.body;
 
     // Vérifier si les stations existent
@@ -82,6 +114,10 @@ const updateTrain = async (req, res) => {
 
 const deleteTrain = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const deletedTrain = await Train.findOneAndDelete(req.params.trainId);
 
     if (!deletedTrain) {
@@ -97,6 +133,7 @@ const deleteTrain = async (req, res) => {
 
 module.exports = {
   listTrains,
+  getTrainInfo,
   createTrain,
   updateTrain,
   deleteTrain,

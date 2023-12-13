@@ -19,6 +19,30 @@ const listStations = async (req, res) => {
   }
 };
 
+const getStationInfo = async (req, res) => {
+  try {
+    // Utilisation de async/await avec findById pour obtenir les informations de la station
+    const station = await Station.findById(req.params.stationId);
+
+    if (!station) {
+      return res.status(404).json({ error: 'Station not found' });
+    }
+
+    const stationInfo = {
+      id: station._id,
+      name: station.name,
+      open_hour: station.open_hour,
+      close_hour: station.close_hour,
+      image: station.image,
+    };
+
+    res.json(stationInfo);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 const createStation = async (req, res) => {
   try {
     // Vérification du rôle de l'utilisateur
@@ -92,6 +116,7 @@ const deleteStation = async (req, res) => {
 
 module.exports = {
   listStations,
+  getStationInfo,
   createStation,
   updateStation,
   deleteStation,
