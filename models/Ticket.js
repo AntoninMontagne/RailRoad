@@ -6,19 +6,11 @@ const ticketSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'User ID is required',
-    },
   },
   train: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Train',
     required: true,
-    validate: {
-      validator: (value) => Joi.string().required().validate(value).error === null,
-      message: 'Train ID is required',
-    },
   },
   is_valid: {
     type: Boolean,
@@ -27,5 +19,15 @@ const ticketSchema = new mongoose.Schema({
 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
+
+Ticket.validateTicket = async function(ticketData) {
+  const schema = Joi.object({
+    user: Joi.string().required(),
+    train: Joi.string().required(),
+    is_valid: Joi.boolean().default(false),
+  });
+
+  return await schema.validateAsync(ticketData);
+};
 
 module.exports = Ticket;

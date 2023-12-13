@@ -1,14 +1,18 @@
 // controllers/ticketController.js
 const Ticket = require('../models/Ticket');
+const User = require('../models/User');
+const Train = require('../models/Train');
 
 const bookTicket = async (req, res) => {
   try {
-    const { trainId } = req.body;
+    const { user, train } = req.body;
+    const userObject = await User.findById(user);
+    const trainObject = await Train.findById(train);
 
     // Création d'un nouveau ticket
     const newTicket = new Ticket({
-      user: req.user._id,
-      train: trainId,
+      user: userObject,
+      train: trainObject,
       is_valid: false, // Par défaut, le ticket n'est pas valide
     });
 
