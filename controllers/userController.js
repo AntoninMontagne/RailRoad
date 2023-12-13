@@ -6,7 +6,6 @@ const User = require('../models/User');
 const createUser = async (req, res) => {
   try {
     const { email, pseudo, password, role } = req.body;
-    console.log(password);
     const newUser = new User({ email, pseudo, role });
     await User.register(newUser, password);
 
@@ -20,18 +19,15 @@ const createUser = async (req, res) => {
   }
 };
 
-const getUserInfo = (req, res) => {
+const getUserInfo = async (req, res) => {
   // Un utilisateur normal ne peut voir que ses propres informations
   if (req.user.role === 'user' && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
-  // Un employé ou un admin peut voir les informations de n'importe quel utilisateur
-  User.findById(req.params.userId, (err, user) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
+  try {
+    // Utilisation de async/await avec findById pour obtenir les informations de l'utilisateur
+    const user = await User.findById(req.params.userId);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -45,33 +41,34 @@ const getUserInfo = (req, res) => {
     };
 
     res.json(userInfo);
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
   // Un utilisateur normal ne peut mettre à jour que ses propres informations
   if (req.user.role === 'user' && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
-  const { email, pseudo, password, role } = req.body;
+  try {
+    const { email, pseudo, password, role } = req.body;
 
-  User.findById(req.params.userId, async (err, user) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
+    // Utilisation de async/await avec findById pour obtenir l'utilisateur à mettre à jour
+    const user = await User.findById(req.params.userId);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Met à jour les informations de l'utilisateur
+    // Mettre à jour les informations de l'utilisateur
     user.email = email;
     user.pseudo = pseudo;
     user.role = role;
 
-    // Si un nouveau mot de passe est fourni, le met à jour
+    // Si un nouveau mot de passe est fourni, le mettre à jour
     if (password) {
       await user.setPassword(password);
     }
@@ -79,8 +76,12 @@ const updateUser = (req, res) => {
     await user.save();
 
     res.json({ message: 'User updated successfully' });
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
+
 
 const deleteUser = (req, res) => {
   // Un utilisateur normal ne peut supprimer que lui-même
