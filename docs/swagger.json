@@ -647,23 +647,35 @@
           "content": {
             "application/json": {
               "example": {
-                "user": "user@gmail.com",
-                "train": "Train 1"
-              }
+                "userEmail": "user@gmail.com",
+                "trainId": "65798a5e1c487ca270784d3f"
+              }              
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Ticket created successfully",
+            "description": "Ticket booked successfully",
             "content": {
               "application/json": {
                 "example": {
-                  "name": "Train test 3",
-                  "start_station": "657981f682a52d6b39bc26c6",
-                  "end_station": "6579820982a52d6b39bc26c8",
-                  "time_of_departure": "2023-12-17T13:15:00.000Z",
-                  "_id": "6579cc511174649ee3a58fff",
+                  "user": {
+                      "_id": "657989b81c487ca270784d37",
+                      "email": "antonin@gmail.com",
+                      "pseudo": "toninos380",
+                      "role": "user",
+                      "__v": 0
+                  },
+                  "train": {
+                      "_id": "65798a5e1c487ca270784d3f",
+                      "name": "Train test",
+                      "start_station": "657981f682a52d6b39bc26c6",
+                      "end_station": "6579820982a52d6b39bc26c8",
+                      "time_of_departure": "2023-12-13T13:15:00.000Z",
+                      "__v": 0
+                  },
+                  "is_valid": false,
+                  "_id": "657b6f7155cca48ca1b4eeb3",
                   "__v": 0
                 }
               }
@@ -676,7 +688,7 @@
       }
     },
     "/tickets/{ticketId}/validate": {
-      "put": {
+      "post": {
         "summary": "Validate a ticket",
         "tags": ["Tickets"],
         "security": [
@@ -694,19 +706,12 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "example": {
-                "is_valid": "true"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Ticket validated successfully"
+          },
+          "400": {
+            "description": "Ticket already validated"
           },
           "403": {
             "description": "Forbidden"
