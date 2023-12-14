@@ -5,9 +5,19 @@ const Train = require('../models/Train');
 
 const bookTicket = async (req, res) => {
   try {
-    const { user, train } = req.body;
-    const userObject = await User.findById(user);
-    const trainObject = await Train.findById(train);
+    const { userEmail, trainId } = req.body;
+
+    // Recherche de l'utilisateur par son email
+    const userObject = await User.findOne({ email: userEmail });
+    if (!userObject) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Recherche du train par son ID
+    const trainObject = await Train.findById(trainId);
+    if (!trainObject) {
+      return res.status(404).json({ error: 'Train not found' });
+    }
 
     // Création d'un nouveau ticket
     const newTicket = new Ticket({
@@ -24,6 +34,7 @@ const bookTicket = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 const validateTicket = async (req, res) => {
   try {
