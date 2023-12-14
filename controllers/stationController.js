@@ -1,6 +1,8 @@
 // controllers/stationController.js
 const Station = require('../models/Station');
 const Train = require('../models/Train');
+const sharp = require('sharp');
+const path = require('path');
 
 const listStations = async (req, res) => {
   try {
@@ -33,7 +35,7 @@ const getStationInfo = async (req, res) => {
       name: station.name,
       open_hour: station.open_hour,
       close_hour: station.close_hour,
-      image: station.image,
+      image: station.image ? path.join('/img', station.image) : null,
     };
 
     res.json(stationInfo);
@@ -53,7 +55,21 @@ const createStation = async (req, res) => {
     const { name, open_hour, close_hour } = req.body;
     const newStation = new Station({ name, open_hour, close_hour });
 
-    // Ajoutez la logique pour gérer l'image ici si nécessaire
+    if (req.body.image) {
+      try {
+        const imageName = path.basename(req.body.image, path.extname(req.body.image)); // Récupère le nom de base sans l'extension
+        const resizedImagePath = path.join(__dirname, '..', 'img', `${imageName}-resized.jpg`);
+
+        await sharp(req.body.image)
+          .resize(200, 200)
+          .toFile(resizedImagePath);
+
+        newStation.image = `${imageName}-resized.jpg`;
+      } catch (imageError) {
+        console.error('Error processing image:', imageError);
+        return res.status(500).json({ error: 'Error processing image' });
+      }
+    }
 
     await newStation.save();
     res.status(201).json(newStation);
@@ -70,26 +86,46 @@ const updateStation = async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const { name, open_hour, close_hour } = req.body;
+    const { name, open_hour, close_hour, image } = req.body;
 
-    const updatedStation = await Station.findByIdAndUpdate(
-      req.params.stationId,
-      { name, open_hour, close_hour },
-      { new: true }
-    );
+    // Récupération de la station existante
+    const existingStation = await Station.findById(req.params.stationId);
 
-    if (!updatedStation) {
+    if (!existingStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
 
-    // Ajoutez la logique pour gérer l'image ici si nécessaire
+    // Mettez à jour les propriétés de la station
+    existingStation.name = name;
+    existingStation.open_hour = open_hour;
+    existingStation.close_hour = close_hour;
 
+    // Mise à jour de l'image si une nouvelle image est fournie
+    if (req.body.image) {
+      try {
+        const imageName = path.basename(req.body.image, path.extname(req.body.image));
+        const resizedImagePath = path.join(__dirname, '..', 'img', `${imageName}-resized.jpg`);
+
+        await sharp(req.body.image)
+          .resize(200, 200)
+          .toFile(resizedImagePath);
+
+        existingStation.image = `${imageName}-resized.jpg`;
+      } catch (imageError) {
+        console.error('Error processing image:', imageError);
+        return res.status(500).json({ error: 'Error processing image' });
+      }
+    }
+
+    // Sauvegarde de la station mise à jour
+    const updatedStation = await existingStation.save();
     res.json(updatedStation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 const deleteStation = async (req, res) => {
   try {

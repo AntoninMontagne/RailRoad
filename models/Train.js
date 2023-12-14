@@ -8,10 +8,12 @@ const trainSchema = new mongoose.Schema({
   },
   start_station: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Station',
     required: true,
   },
   end_station: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Station',
     required: true,
   },
   time_of_departure: {
