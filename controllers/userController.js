@@ -1,16 +1,15 @@
-// controllers/userController.js
 const jwt = require("jsonwebtoken");
 const { secretKey } = require("../config.js");
 const User = require("../models/User");
-const passport = require("passport");
 
+// Créer un utilisateur
 const createUser = async (req, res) => {
   try {
     const { email, pseudo, password, role } = req.body;
     const newUser = new User({ email, pseudo, role });
     await User.register(newUser, password);
 
-    // Génération du token JWT
+    // Génération du token JWT (expire au bout d'une heure)
     const token = jwt.sign(
       { id: newUser._id, email: newUser.email, role: newUser.role },
       secretKey,
@@ -24,6 +23,7 @@ const createUser = async (req, res) => {
   }
 };
 
+// Obtenir les informations d'un utilisateur
 const getUserInfo = async (req, res) => {
   // Un utilisateur normal ne peut voir que ses propres informations
   if (req.user.role === "user" && req.params.userId !== req.user.id) {
@@ -31,9 +31,9 @@ const getUserInfo = async (req, res) => {
   }
 
   try {
-    // Utilisation de async/await avec findById pour obtenir les informations de l'utilisateur
     const user = await User.findById(req.params.userId);
 
+    // Vérification si l'utilisateur existe
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -52,21 +52,18 @@ const getUserInfo = async (req, res) => {
   }
 };
 
+// Mettre à jour un utilisateur
 const updateUser = async (req, res) => {
   // Un utilisateur normal ne peut mettre à jour que ses propres informations
-  if (
-    (req.user.role === "user" || req.user.role === "employee") &&
-    req.params.userId !== req.user.id
-  ) {
+  if ((req.user.role === "user" || req.user.role === "employee") && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   try {
     const { email, pseudo, password, role } = req.body;
-
-    // Utilisation de async/await avec findById pour obtenir l'utilisateur à mettre à jour
     const user = await User.findById(req.params.userId);
 
+    // Vérification si l'utilisateur existe
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -90,17 +87,16 @@ const updateUser = async (req, res) => {
   }
 };
 
+// Supprimer un utilisateur
 const deleteUser = (req, res) => {
-  // Un utilisateur normal ne peut supprimer que lui-même
-  if (
-    (req.user.role === "user" || req.user.role === "employee") &&
-    req.params.userId !== req.user.id
-  ) {
+  // Un utilisateur normal ne peut se supprimer que lui-même
+  if ((req.user.role === "user" || req.user.role === "employee") && req.params.userId !== req.user.id) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   User.findOneAndDelete({ _id: req.params.userId })
     .then((user) => {
+      // Vérification si l'utilisateur existe
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -112,19 +108,27 @@ const deleteUser = (req, res) => {
     });
 };
 
+// Se connecter
 const login = async (req, res) => {
   try {
+    // Recherche de l'utilisateur par son email
     const user = await User.findOne({ email: req.body.email });
     console.log(user);
+
+    // Vérification si l'utilisateur existe
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Vérification du mot de passe
     user.authenticate(req.body.password, (err, authenticated) => {
+
+      // Si le mot de passe est incorrect
       if (err || !authenticated) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
+      // Génération du token JWT (expire au bout d'une heure)
       const token = jwt.sign(
         { id: user._id, email: user.email, role: user.role },
         secretKey,

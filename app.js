@@ -1,11 +1,7 @@
-// app.js
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
 const passport = require('passport');
 const localStrategy = require('passport-local').Strategy;
-const expressJoiValidation = require('express-joi-validation');
-const expressJoi = expressJoiValidation.createValidator({ passError: true });
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./docs/swagger.json');
 require('dotenv').config();
@@ -27,11 +23,12 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI, { dbName: 'RailRoad' });
 const db = mongoose.connection;
 
+// Gestion des erreurs de connexion à MongoDB
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 db.once('open', async () => {
   console.log('Connected to MongoDB');
 
-  // Force la création de la base de données "RailRoad" s'elle n'existe pas encore
+  // Force la création de la base de données "RailRoad" si elle n'existe pas encore
   await mongoose.connection.db.command({ ping: 1 });
   console.log('Database "RailRoad" created or already exists.');
 });
@@ -41,13 +38,8 @@ passport.use(new localStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Utilisation des routes avec le préfixe /api
+// Utilisation des routes sans préfixe
 app.use('/', userRoutes, trainRoutes, ticketRoutes, stationRoutes);
-
-// Exemple de route protégée par JWT
-app.get('/api/protected', authenticateJWT, (req, res) => {
-  res.json({ message: 'This is a protected route.' });
-});
 
 // Gestion de la documentation avec Swagger
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

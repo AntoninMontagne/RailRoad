@@ -1,14 +1,15 @@
-// controllers/stationController.js
 const Station = require('../models/Station');
 const Train = require('../models/Train');
 const sharp = require('sharp');
 const path = require('path');
 
+// Lister toutes les stations
 const listStations = async (req, res) => {
   try {
     const { sortBy } = req.query;
     const query = Station.find();
 
+    // Possibilité de trier les stations
     if (sortBy) {
       query.sort(sortBy);
     }
@@ -21,11 +22,12 @@ const listStations = async (req, res) => {
   }
 };
 
+// Obtenir les informations d'une station
 const getStationInfo = async (req, res) => {
   try {
-    // Utilisation de async/await avec findById pour obtenir les informations de la station
     const station = await Station.findById(req.params.stationId);
 
+    // Vérification si la station existe
     if (!station) {
       return res.status(404).json({ error: 'Station not found' });
     }
@@ -45,9 +47,10 @@ const getStationInfo = async (req, res) => {
   }
 };
 
+// Créer une station
 const createStation = async (req, res) => {
   try {
-    // Vérification du rôle de l'utilisateur
+    // Seul les admin peuvent créer une station
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -55,15 +58,20 @@ const createStation = async (req, res) => {
     const { name, open_hour, close_hour } = req.body;
     const newStation = new Station({ name, open_hour, close_hour });
 
+    // Traitement de l'image
     if (req.body.image) {
       try {
-        const imageName = path.basename(req.body.image, path.extname(req.body.image)); // Récupère le nom de base sans l'extension
+        // Récupèration du nom de base sans l'extension
+        const imageName = path.basename(req.body.image, path.extname(req.body.image)); 
+        // Chemin de l'image redimensionnée
         const resizedImagePath = path.join(__dirname, '..', 'img', `${imageName}-resized.jpg`);
 
+        // Redimensionnement de l'image
         await sharp(req.body.image)
           .resize(200, 200)
           .toFile(resizedImagePath);
 
+        // Enregistrement du nom de l'image
         newStation.image = `${imageName}-resized.jpg`;
       } catch (imageError) {
         console.error('Error processing image:', imageError);
@@ -79,23 +87,23 @@ const createStation = async (req, res) => {
   }
 };
 
+// Modifier une station
 const updateStation = async (req, res) => {
   try {
-    // Vérification du rôle de l'utilisateur
+    // Seul les admin peuvent modifier une station
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
     const { name, open_hour, close_hour, image } = req.body;
-
-    // Récupération de la station existante
     const existingStation = await Station.findById(req.params.stationId);
 
+    // Vérification si la station existe
     if (!existingStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
 
-    // Mettez à jour les propriétés de la station
+    // Mise à jour des propriétés de la station
     existingStation.name = name;
     existingStation.open_hour = open_hour;
     existingStation.close_hour = close_hour;
@@ -117,7 +125,6 @@ const updateStation = async (req, res) => {
       }
     }
 
-    // Sauvegarde de la station mise à jour
     const updatedStation = await existingStation.save();
     res.json(updatedStation);
   } catch (error) {
@@ -126,10 +133,10 @@ const updateStation = async (req, res) => {
   }
 };
 
-
+// Supprimer une station
 const deleteStation = async (req, res) => {
   try {
-    // Vérification du rôle de l'utilisateur
+    // Seul les admin peuvent supprimer une station
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -139,6 +146,7 @@ const deleteStation = async (req, res) => {
 
     const deletedStation = await Station.findOneAndDelete({ _id: req.params.stationId });
     
+    // Vérification si la station existe
     if (!deletedStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
@@ -149,7 +157,6 @@ const deleteStation = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
 
 module.exports = {
   listStations,

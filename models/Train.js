@@ -24,6 +24,7 @@ const trainSchema = new mongoose.Schema({
 
 const Train = mongoose.model('Train', trainSchema);
 
+// Fonction de validation utilisant Joi
 Train.validateTrain = async function(trainData) {
   const schema = Joi.object({
     name: Joi.string().required(),

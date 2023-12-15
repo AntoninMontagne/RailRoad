@@ -7,15 +7,15 @@ const stationSchema = new mongoose.Schema({
     required: true,
   },
   open_hour: {
-    type: String, // ou un autre type selon le format de vos heures
+    type: String, 
     required: true,
   },
   close_hour: {
-    type: String, // ou un autre type selon le format de vos heures
+    type: String,
     required: true,
   },
   image: {
-    type: String, // chemin d'accès ou URL de l'image
+    type: String, // chemin d'accès de l'image
   },
 });
 

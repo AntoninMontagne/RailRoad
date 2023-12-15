@@ -3,7 +3,7 @@
   "info": {
     "title": "Railroad API",
     "version": "1.0.0",
-    "description": "API for managing users in the Railroad application"
+    "description": "API for managing users, trains, stations and tickets in the Railroad application"
   },
   "paths": {
     "/users": {

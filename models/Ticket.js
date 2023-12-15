@@ -14,12 +14,13 @@ const ticketSchema = new mongoose.Schema({
   },
   is_valid: {
     type: Boolean,
-    default: false,
+    default: false, // par défaut le ticket n'est pas valide
   },
 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 
+// Fonction de validation utilisant Joi
 Ticket.validateTicket = async function(ticketData) {
   const schema = Joi.object({
     user: Joi.string().required(),

@@ -2,6 +2,7 @@ const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Train = require('../models/Train');
 
+// Réserver un billet
 const bookTicket = async (req, res) => {
   try {
     const { userEmail, trainName } = req.body;
@@ -21,7 +22,7 @@ const bookTicket = async (req, res) => {
     const newTicket = new Ticket({
       user: userObject,
       train: trainObject,
-      is_valid: false, // Par défaut, le ticket n'est pas valide
+      is_valid: false,
     });
 
     await newTicket.save();
@@ -33,7 +34,7 @@ const bookTicket = async (req, res) => {
   }
 };
 
-
+// Valider un ticket
 const validateTicket = async (req, res) => {
   try {
     const { ticketId } = req.params;
@@ -45,7 +46,7 @@ const validateTicket = async (req, res) => {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    // Vérification si l'utilisateur connecté peut valider ce ticket
+    // Vérification si l'utilisateur connecté peut valider ce ticket (admin ou employye)
     if (req.user.role !== 'admin' && String(ticket.user) !== String(req.user._id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -70,4 +71,3 @@ module.exports = {
   bookTicket,
   validateTicket,
 };
-``
