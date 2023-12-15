@@ -134,14 +134,14 @@ const deleteStation = async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const deletedStation = await Station.findOneAndDelete(req.params.stationId);
+    // Supprimer les trains associés à cette station
+    await Train.deleteMany({ $or: [{ start_station: req.params.stationId }, { end_station: req.params.stationId }] });
 
+    const deletedStation = await Station.findOneAndDelete({ _id: req.params.stationId });
+    
     if (!deletedStation) {
       return res.status(404).json({ error: 'Station not found' });
     }
-
-    // Supprimer les trains associés à cette station
-    await Train.deleteMany({ $or: [{ start_station: deletedStation._id }, { end_station: deletedStation._id }] });
 
     res.json({ message: 'Station deleted successfully' });
   } catch (error) {
@@ -149,6 +149,7 @@ const deleteStation = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 module.exports = {
   listStations,

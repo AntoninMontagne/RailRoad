@@ -59,7 +59,6 @@ describe('Endpoints liés aux stations', () => {
       .delete(`/stations/${createdStationId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
-
     const deletedStation = await Station.findById(createdStationId);
     expect(deletedStation).to.not.exist;
   });

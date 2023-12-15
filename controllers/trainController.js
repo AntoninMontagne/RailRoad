@@ -88,8 +88,8 @@ const updateTrain = async (req, res) => {
     const { name, start_station, end_station, time_of_departure } = req.body;
 
     // Vérifier si les stations existent
-    const startStationExists = await Station.exists({  name: start_station  });
-    const endStationExists = await Station.exists({ name: end_station });
+    const startStationExists = await Station.exists({  _id: start_station  });
+    const endStationExists = await Station.exists({ _id: end_station });
 
     if (!startStationExists || !endStationExists) {
       return res.status(404).json({ error: 'Start or end station not found' });
