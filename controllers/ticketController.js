@@ -5,8 +5,6 @@ const Train = require('../models/Train');
 const bookTicket = async (req, res) => {
   try {
     const { userEmail, trainName } = req.body;
-    console.log(req.body);
-
     // Recherche de l'utilisateur par son email
     const userObject = await User.findOne({ email: userEmail });
     if (!userObject) {

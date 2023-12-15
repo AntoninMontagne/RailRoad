@@ -82,11 +82,9 @@ describe('Test de création de ticket', () => {
 
     const createdTicket = await Ticket.findById(response.body._id);
 
-    console.log(createdUserId);
-
     expect(createdTicket).to.not.be.null;
-    expect(response.body.user).to.equal(createdUserId.toString());
-    expect(response.body.train).to.equal(createdTrainId.toString());
+    expect(createdTicket.user.toString()).to.equal(createdUserId.toString());
+    expect(createdTicket.train.toString()).to.equal(createdTrainId.toString());
     expect(createdTicket.is_valid).to.be.false;
   });
 });
