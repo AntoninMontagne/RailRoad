@@ -1,4 +1,3 @@
-// controllers/ticketController.js
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Train = require('../models/Train');
@@ -51,6 +50,11 @@ const validateTicket = async (req, res) => {
     // Vérification si l'utilisateur connecté peut valider ce ticket
     if (req.user.role !== 'admin' && String(ticket.user) !== String(req.user._id)) {
       return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Vérification si le ticket est déjà valide
+    if (ticket.is_valid) {
+      return res.status(400).json({ error: 'Ticket already validated' });
     }
 
     // Validation du ticket
