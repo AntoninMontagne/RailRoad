@@ -1,3 +1,4 @@
+Auteurs : Lou-Anne Gautherie et Antonin Montagne
 # Prérequis:
 
 Avoir une base de données MongoDB
